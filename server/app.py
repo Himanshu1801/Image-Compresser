@@ -1,8 +1,10 @@
 from flask import Flask, request, send_file
+from flask_cors import CORS
 from ImgCompression import process_image 
 import io
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def index():
@@ -12,16 +14,18 @@ def index():
 def process():
     if 'file' not in request.files:
         return "No file part"
+    
     file = request.files['file']
+    
     if file.filename == '':
         return "No selected file"
-    if file:
-        processed_image = process_image(file)
-        img_io = io.BytesIO()
-        processed_image.save(img_io, 'JPEG', quality=70)
-        img_io.seek(0)
-        return send_file(img_io, mimetype='image/jpeg')
     
+    processed_image, error = process_image(file)
+    if error:
+        return error, 500  # Return the error message with status code 500
+    
+    return send_file(io.BytesIO(processed_image), mimetype='image/jpeg')
+
 @app.route('/download')
 def download():
     return send_file('processed_image.jpg', as_attachment=True)

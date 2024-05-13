@@ -1,35 +1,56 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import axios from 'axios'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [processedImage, setProcessedImage] = useState(null);
+
+  const handleFileChange = (event) => {
+    setSelectedFile(event.target.files[0]);
+  };
+
+  const handleUpload = async () => {
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await axios.post('http://localhost:5000/process', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setProcessedImage(response.data);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/download', {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'processed_image.jpg');
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div>
+      <h1>Image Processing App</h1>
+      <input type="file" onChange={handleFileChange} />
+      <button onClick={handleUpload}>Process Image</button>
+      {processedImage && <img src={`data:image/jpeg;base64,${processedImage}`} alt="Processed" />}
+      {processedImage && <button onClick={handleDownload}>Download Processed Image</button>}
+    </div>
+  );
 }
 
 export default App
