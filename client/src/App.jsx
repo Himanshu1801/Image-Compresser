@@ -1,18 +1,25 @@
-import { useState } from 'react'
-import axios from 'axios'
-import './App.css'
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState('dark');
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
+    setProcessedImage(null); // Clear previously displayed image when a new file is selected
   };
 
   const handleUpload = async () => {
+    if (!selectedFile) return; // Prevent processing if no file is selected
+
     const formData = new FormData();
     formData.append('file', selectedFile);
+
+    setLoading(true);
 
     try {
       const response = await axios.post('http://localhost:5000/process', formData, {
@@ -25,6 +32,8 @@ function App() {
       setProcessedImage(`data:image/jpeg;base64,${imageBase64}`);
     } catch (error) {
       console.error('Error uploading file:', error.response?.data || error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,15 +53,35 @@ function App() {
     }
   };
 
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
   return (
-    <div>
+    <div className="container">
+      <button className="theme-toggle" onClick={toggleTheme}>
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
       <h1>Image Processing App</h1>
       <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Process Image</button>
-      {processedImage && <img src={processedImage} alt="Processed" />}
-      {processedImage && <button onClick={handleDownload}>Download Processed Image</button>}
+      <button onClick={handleUpload} disabled={!selectedFile || loading}>
+        {loading ? 'Processing...' : 'Process Image'}
+      </button>
+      {processedImage && (
+        <div>
+          <img src={processedImage} alt="Processed" />
+          <button className="download-button" onClick={handleDownload}>
+            Download Processed Image
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export default App
+export default App;
