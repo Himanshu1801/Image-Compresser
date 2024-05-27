@@ -20,9 +20,11 @@ function App() {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setProcessedImage(response.data);
+      console.log(response.data);
+      const imageBase64 = response.data.image;
+      setProcessedImage(`data:image/jpeg;base64,${imageBase64}`);
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error('Error uploading file:', error.response?.data || error);
     }
   };
 
@@ -38,7 +40,7 @@ function App() {
       document.body.appendChild(link);
       link.click();
     } catch (error) {
-      console.error('Error downloading image:', error);
+      console.error('Error downloading image:', error.response?.data || error);
     }
   };
 
@@ -47,7 +49,7 @@ function App() {
       <h1>Image Processing App</h1>
       <input type="file" onChange={handleFileChange} />
       <button onClick={handleUpload}>Process Image</button>
-      {processedImage && <img src={`data:image/jpeg;base64,${processedImage}`} alt="Processed" />}
+      {processedImage && <img src={processedImage} alt="Processed" />}
       {processedImage && <button onClick={handleDownload}>Download Processed Image</button>}
     </div>
   );

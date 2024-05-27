@@ -6,7 +6,6 @@ import io
 
 def process_image(image_file):
     try:
-        # Convert the uploaded image to an OpenCV format
         image = cv2.imdecode(np.frombuffer(image_file.read(), np.uint8), cv2.IMREAD_COLOR)
         
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -29,23 +28,21 @@ def process_image(image_file):
         pca_r.fit(df_red)
         trans_pca_r = pca_r.transform(df_red)
         
-        b_arr = pca_b.inverse_transform(trans_pca_b)
-        g_arr = pca_g.inverse_transform(trans_pca_g)
-        r_arr = pca_r.inverse_transform(trans_pca_r)
+        b_arr = pca_b.inverse_transform(trans_pca_b) * 255
+        g_arr = pca_g.inverse_transform(trans_pca_g) * 255
+        r_arr = pca_r.inverse_transform(trans_pca_r) * 255
+        
+        b_arr = np.clip(b_arr, 0, 255).astype(np.uint8)
+        g_arr = np.clip(g_arr, 0, 255).astype(np.uint8)
+        r_arr = np.clip(r_arr, 0, 255).astype(np.uint8)
         
         img_reduced = cv2.merge((b_arr, g_arr, r_arr))
-        
-        # Convert back to RGB format (if needed)
-        if img_reduced.shape[-1] == 3:  # Check if it's a 3-channel image
-            img_reduced = cv2.cvtColor(img_reduced, cv2.COLOR_BGR2RGB)
-        
-        # Convert back to PIL format
         img_reduced_pil = Image.fromarray(img_reduced)
         
         img_io = io.BytesIO()
         img_reduced_pil.save(img_io, format='JPEG')
         img_io.seek(0)
         
-        return img_io.getvalue(), None  # Return the processed image data and no error
+        return img_io.getvalue(), None
     except Exception as e:
-        return None, str(e)  # Return None for the image data and the error message as a string
+        return None, str(e)

@@ -1,4 +1,5 @@
-from flask import Flask, request, send_file
+import base64
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from ImgCompression import process_image 
 import io
@@ -13,18 +14,23 @@ def index():
 @app.route('/process', methods=['POST'])
 def process():
     if 'file' not in request.files:
-        return "No file part"
+        return jsonify({'error': "No file part"}), 400
     
     file = request.files['file']
     
     if file.filename == '':
-        return "No selected file"
+        return jsonify({'error': "No selected file"}), 400
     
     processed_image, error = process_image(file)
     if error:
-        return error, 500  # Return the error message with status code 500
+        return jsonify({'error': error}), 500
     
-    return send_file(io.BytesIO(processed_image), mimetype='image/jpeg')
+    with open('processed_image.jpg', 'wb') as f:
+        f.write(processed_image)
+    
+    processed_image_base64 = base64.b64encode(processed_image).decode('utf-8')
+    
+    return jsonify({'image': processed_image_base64})
 
 @app.route('/download')
 def download():
