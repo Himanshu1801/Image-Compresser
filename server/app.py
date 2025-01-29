@@ -1,5 +1,6 @@
 import base64
 import logging
+import os
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from ImgCompression import process_image 
@@ -68,4 +69,5 @@ def internal_server_error(error):
 
 
 if __name__ == '__main__':
-    app.run()
+    port = int(os.environ.get("PORT", 5000))  # Default to 5000 if PORT is not set
+    app.run(host='0.0.0.0', port=port, debug=False)
