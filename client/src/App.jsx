@@ -10,11 +10,14 @@ function App() {
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
-    setProcessedImage(null); // Clear previously displayed image when a new file is selected
+    setProcessedImage(null);
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return; // Prevent processing if no file is selected
+    if (!selectedFile) {
+      alert("Please select a file first.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -28,8 +31,13 @@ function App() {
         }
       });
       console.log(response.data);
-      const imageBase64 = response.data.image;
-      setProcessedImage(`data:image/jpeg;base64,${imageBase64}`);
+      if (response.data.image) {
+        const imageBase64 = response.data.image;
+        setProcessedImage(`data:image/jpeg;base64,${imageBase64}`);
+      } else {
+        alert("Processing failed. No image returned.")
+      }
+
     } catch (error) {
       console.error('Error uploading file:', error.response?.data || error);
     } finally {
@@ -38,8 +46,10 @@ function App() {
   };
 
   const handleDownload = async () => {
+    const formData = new FormData();
+    formData.append("file", selectedFile);
     try {
-      const response = await axios.get('http://localhost:5000/download', {
+      const response = await axios.post('http://localhost:5000/download', formData, {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -48,8 +58,17 @@ function App() {
       link.setAttribute('download', 'processed_image.jpg');
       document.body.appendChild(link);
       link.click();
+
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      setSelectedFile(null);
+      setProcessedImage(null);
+
+      document.querySelector('input[type="file"]').value = "";
     } catch (error) {
       console.error('Error downloading image:', error.response?.data || error);
+      alert("Error downloading the image.");
     }
   };
 
