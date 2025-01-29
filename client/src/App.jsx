@@ -25,7 +25,7 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/process', formData, {
+      const response = await axios.post('https://image-compresser.onrender.com/process', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -49,7 +49,7 @@ function App() {
     const formData = new FormData();
     formData.append("file", selectedFile);
     try {
-      const response = await axios.post('http://localhost:5000/download', formData, {
+      const response = await axios.post('https://image-compresser.onrender.com/download', formData, {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
